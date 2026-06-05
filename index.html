@@ -44,7 +44,7 @@
   .sales-box { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
   .sales-box h3 { font-size: 16px; color: #223670; margin-bottom: 15px; border-bottom: 2px solid #223670; padding-bottom: 8px; }
   .sales-point { background: #f8f9ff; border-left: 4px solid #223670; padding: 12px 16px; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; }
-  .error-box { background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 12px; padding: 20px; text-align: center; color: #c62828; display: none; }
+  .error-box { background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 12px; padding: 20px; text-align: center; color: #c62828; display: none; margin-top: 20px; }
   @media(max-width: 600px) {
     .scores { grid-template-columns: 1fr 1fr; }
     .info-cards { grid-template-columns: 1fr 1fr; }
@@ -165,8 +165,7 @@ async function diagnose() {
     document.getElementById('riskTitle').textContent =
       data.risk === '高' ? '⚠️ リスクが高い状態です' :
       data.risk === '中' ? '△ 改善の余地があります' : '✅ 基本的に良好です';
-    document.getElementById('riskDesc').textContent =
-      `診断URL: ${data.url}`;
+    document.getElementById('riskDesc').textContent = `診断URL: ${data.url}`;
 
     const mobileEl = document.getElementById('mobileScore');
     mobileEl.textContent = data.mobile;
