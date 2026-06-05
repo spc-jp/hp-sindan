@@ -4,196 +4,264 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ホームページ診断ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Noto Sans JP', sans-serif; background: #f0f4f8; color: #333; }
-  header { background: #223670; color: white; padding: 20px; text-align: center; }
-  header h1 { font-size: 22px; }
-  header p { font-size: 13px; margin-top: 5px; opacity: 0.8; }
-  .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
-  .input-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-  .input-box h2 { font-size: 18px; margin-bottom: 15px; color: #223670; }
-  .input-row { display: flex; gap: 10px; }
-  input[type="text"] { flex: 1; padding: 12px 16px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
-  input[type="text"]:focus { border-color: #223670; }
-  button { background: #D0A900; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: bold; }
-  button:hover { background: #b89200; }
-  .loading { text-align: center; padding: 40px; display: none; }
-  .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: #223670; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .result { display: none; margin-top: 20px; }
-  .risk-banner { border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; color: white; }
-  .risk-高 { background: #e53935; }
-  .risk-中 { background: #fb8c00; }
-  .risk-低 { background: #43a047; }
-  .risk-banner h2 { font-size: 22px; }
-  .risk-banner p { font-size: 14px; margin-top: 5px; opacity: 0.9; }
-  .scores { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-  .score-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  .score-card h3 { font-size: 13px; color: #888; margin-bottom: 10px; }
-  .score-num { font-size: 48px; font-weight: bold; line-height: 1; }
-  .score-label { font-size: 12px; margin-top: 5px; }
-  .score-高 { color: #e53935; }
-  .score-中 { color: #fb8c00; }
-  .score-低 { color: #43a047; }
-  .info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-  .info-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 12px; }
-  .info-icon { font-size: 28px; }
-  .info-text h3 { font-size: 13px; color: #888; }
-  .info-text p { font-size: 15px; font-weight: bold; margin-top: 2px; }
-  .sales-box { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  .sales-box h3 { font-size: 16px; color: #223670; margin-bottom: 15px; border-bottom: 2px solid #223670; padding-bottom: 8px; }
-  .sales-point { background: #f8f9ff; border-left: 4px solid #223670; padding: 12px 16px; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; }
-  .error-box { background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 12px; padding: 20px; text-align: center; color: #c62828; display: none; margin-top: 20px; }
-  @media(max-width: 600px) {
-    .scores { grid-template-columns: 1fr 1fr; }
-    .info-cards { grid-template-columns: 1fr 1fr; }
-    .input-row { flex-direction: column; }
-  }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:#f0f4f8;color:#333}
+header{background:#223670;color:#fff;padding:20px;text-align:center}
+header h1{font-size:20px;font-weight:500}
+header p{font-size:12px;margin-top:5px;opacity:.8}
+.container{max-width:800px;margin:24px auto;padding:0 16px}
+.input-box{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:20px}
+.input-box h2{font-size:15px;margin-bottom:12px;color:#223670;font-weight:500}
+.input-row{display:flex;gap:8px}
+input[type=text]{flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;font-family:inherit}
+input[type=text]:focus{border-color:#223670}
+.btn-diagnose{background:#D0A900;color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;white-space:nowrap;transition:background .2s}
+.btn-diagnose:hover{background:#b89200}
+.btn-diagnose.running{background:#223670;pointer-events:none}
+.scan-line{position:absolute;left:0;top:-2px;width:100%;height:2px;background:rgba(255,255,255,.7);display:none;animation:scan .7s linear infinite}
+@keyframes scan{0%{top:-2px}100%{top:102%}}
+.loading-area{display:none;text-align:center;padding:40px 0}
+.radar-wrap{position:relative;width:140px;height:140px;margin:0 auto 16px}
+.pulse{position:absolute;inset:0;border-radius:50%;border:2px solid #223670;animation:pulse 1.4s ease-out infinite;opacity:0}
+.pulse:nth-child(2){animation-delay:.45s}
+.pulse:nth-child(3){animation-delay:.9s}
+@keyframes pulse{0%{transform:scale(.5);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+.radar-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;color:#223670}
+.loading-msg{font-size:13px;color:#666;animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.result-area{display:none}
+.risk-banner{border-radius:12px;padding:16px 20px;margin-bottom:16px;color:#fff;animation:slideIn .4s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.risk-banner h2{font-size:17px;font-weight:500}
+.risk-banner p{font-size:12px;margin-top:4px;opacity:.85}
+.risk-high{background:#c62828}
+.risk-mid{background:#e65100}
+.risk-low{background:#2e7d32}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.chart-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:center}
+.chart-card h3{font-size:12px;color:#888;margin-bottom:10px;font-weight:400}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.sc{background:#fff;border-radius:10px;padding:12px 8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sc-lbl{font-size:10px;color:#888;margin-bottom:4px}
+.sc-num{font-size:26px;font-weight:700;line-height:1}
+.sc-tag{font-size:10px;margin-top:3px}
+.c-danger{color:#c62828}.c-warn{color:#e65100}.c-ok{color:#2e7d32}
+.info-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info-card{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px}
+.info-icon{font-size:22px}
+.info-lbl{font-size:10px;color:#888}
+.info-val{font-size:13px;font-weight:700;margin-top:2px}
+.proposal-box{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.proposal-box h3{font-size:14px;font-weight:700;color:#223670;border-bottom:2px solid #223670;padding-bottom:8px;margin-bottom:12px}
+.sp{border-left:3px solid #223670;padding:10px 14px;margin-bottom:8px;border-radius:0 8px 8px 0;background:#f8f9ff;font-size:13px;line-height:1.7;animation:fadeIn .5s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.sp:nth-child(1){animation-delay:.1s}
+.sp:nth-child(2){animation-delay:.2s}
+.sp:nth-child(3){animation-delay:.3s}
+.sp:nth-child(4){animation-delay:.4s}
+.sp.urgent{border-color:#c62828;background:#fff8f8}
+.sp.warn{border-color:#e65100;background:#fff9f5}
+.sp.good{border-color:#2e7d32;background:#f5fff6}
+.error-box{background:#fff3f3;border:1px solid #ffcdd2;border-radius:12px;padding:20px;text-align:center;color:#c62828;display:none;margin-bottom:16px;font-size:14px}
+@media(max-width:600px){
+  .two-col{grid-template-columns:1fr}
+  .input-row{flex-direction:column}
+}
 </style>
 </head>
 <body>
 <header>
   <h1>🔍 ホームページ診断ツール</h1>
-  <p>URLを入力するだけで、ホームページの課題を即診断します</p>
+  <p>URLを入力するだけで、Googleのデータでサイトの課題を即診断します</p>
 </header>
-
 <div class="container">
   <div class="input-box">
     <h2>診断したいホームページのURLを入力してください</h2>
     <div class="input-row">
-      <input type="text" id="urlInput" placeholder="https://example.com" />
-      <button onclick="diagnose()">診断する</button>
+      <input type="text" id="urlInput" placeholder="https://example.com"/>
+      <button class="btn-diagnose" id="diagBtn" onclick="diagnose()">
+        <span class="scan-line" id="scanLine"></span>
+        <span id="btnLabel">診断する</span>
+      </button>
     </div>
   </div>
 
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <p>Googleのデータで診断中です...<br>少々お待ちください（約10〜20秒）</p>
+  <div class="error-box" id="errorBox">⚠️ 診断に失敗しました。URLを確認してもう一度お試しください。</div>
+
+  <div class="loading-area" id="loadingArea">
+    <div class="radar-wrap">
+      <div class="pulse"></div>
+      <div class="pulse"></div>
+      <div class="pulse"></div>
+      <div class="radar-icon">📡</div>
+    </div>
+    <div class="loading-msg" id="loadingMsg">Googleのデータで診断中...</div>
   </div>
 
-  <div class="error-box" id="errorBox">
-    <p>⚠️ 診断に失敗しました。URLを確認してもう一度お試しください。</p>
-  </div>
-
-  <div class="result" id="result">
+  <div class="result-area" id="resultArea">
     <div class="risk-banner" id="riskBanner">
       <h2 id="riskTitle"></h2>
       <p id="riskDesc"></p>
     </div>
-
-    <div class="scores">
-      <div class="score-card">
-        <h3>📱 モバイル速度</h3>
-        <div class="score-num" id="mobileScore">-</div>
-        <div class="score-label" id="mobileLabel"></div>
-      </div>
-      <div class="score-card">
-        <h3>💻 PC速度</h3>
-        <div class="score-num" id="desktopScore">-</div>
-        <div class="score-label" id="desktopLabel"></div>
-      </div>
-    </div>
-
-    <div class="info-cards">
-      <div class="info-card">
-        <div class="info-icon">🔒</div>
-        <div class="info-text">
-          <h3>SSL（セキュリティ）</h3>
-          <p id="sslStatus"></p>
+    <div class="two-col">
+      <div class="chart-card">
+        <h3>⬠ 総合スコア（レーダーチャート）</h3>
+        <div style="position:relative;height:200px">
+          <canvas id="radarChart"></canvas>
         </div>
       </div>
-      <div class="info-card">
-        <div class="info-icon">🌐</div>
-        <div class="info-text">
-          <h3>WordPress</h3>
-          <p id="wpStatus"></p>
+      <div>
+        <div class="score-grid">
+          <div class="sc"><div class="sc-lbl">📱 モバイル</div><div class="sc-num" id="s-mobile">-</div><div class="sc-tag" id="t-mobile"></div></div>
+          <div class="sc"><div class="sc-lbl">💻 PC速度</div><div class="sc-num" id="s-desktop">-</div><div class="sc-tag" id="t-desktop"></div></div>
+          <div class="sc"><div class="sc-lbl">🔍 SEO</div><div class="sc-num" id="s-seo">-</div><div class="sc-tag" id="t-seo"></div></div>
+          <div class="sc"><div class="sc-lbl">🛡 保守性</div><div class="sc-num" id="s-sec">-</div><div class="sc-tag" id="t-sec"></div></div>
+        </div>
+        <div class="info-row">
+          <div class="info-card">
+            <div class="info-icon">🔒</div>
+            <div><div class="info-lbl">SSL</div><div class="info-val" id="sslVal"></div></div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">🌐</div>
+            <div><div class="info-lbl">WordPress</div><div class="info-val" id="wpVal"></div></div>
+          </div>
         </div>
       </div>
     </div>
-
-    <div class="sales-box">
-      <h3>💬 営業トークのポイント</h3>
+    <div class="proposal-box">
+      <h3>💡 ご提案内容</h3>
       <div id="salesPoints"></div>
     </div>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const WORKER_URL = 'https://hp-sindan-api.yymmatsu.workers.dev';
+const WORKER_URL='https://hp-sindan-api.yymmatsu.workers.dev';
+let radarChart=null;
+const msgs=['Googleのデータで診断中...','セキュリティを確認中...','SEOスコアを計算中...','WordPressを解析中...','レポートを生成中...'];
 
-function getScoreClass(score) {
-  if (score < 50) return '高';
-  if (score < 70) return '中';
-  return '低';
+function cls(s){return s<50?'c-danger':s<70?'c-warn':'c-ok'}
+function tag(s){return s<50?'⚠ 要改善':s<70?'△ やや弱い':'✓ 良好'}
+
+function secScore(ssl,wp){
+  let s=80;
+  if(!ssl)s-=40;
+  if(wp)s-=20;
+  return Math.max(0,s);
 }
 
-function getScoreLabel(score) {
-  if (score < 50) return '⚠️ 要改善';
-  if (score < 70) return '△ やや遅い';
-  return '✅ 良好';
+function proposals(d){
+  const pts=[];
+  if(d.mobile<50) pts.push({c:'urgent',t:'📱 モバイルの表示速度が非常に遅い状態です。スマホユーザーの大半が離脱しているリスクがあります。リニューアルの最優先事項としてご提案します。'});
+  else if(d.mobile<70) pts.push({c:'warn',t:'📱 モバイル速度がやや遅めです。スマホ対応の最適化でユーザー体験を大きく改善できます。'});
+  if(d.desktop<50) pts.push({c:'urgent',t:'💻 PC表示速度も遅く、第一印象で損をしています。画像最適化やキャッシュ設定の見直しをご提案します。'});
+  if(!d.isSSL) pts.push({c:'urgent',t:'🔓 SSLが未設定です。「保護されていない通信」と表示されており、信頼性を大きく損なっています。即時対応をお勧めします。'});
+  if(d.isWordPress) pts.push({c:'warn',t:'⚠️ WordPressが使われています。更新が滞るとウイルス感染や不正アクセスのリスクが高まります。セキュリティ対策をご提案します。'});
+  if(d.seo>0&&d.seo<50) pts.push({c:'urgent',t:'🔍 SEOスコアが低く、Googleの検索結果で不利な状態です。メタ情報の整備とコンテンツ構成の見直しをご提案します。'});
+  else if(d.seo>0&&d.seo<70) pts.push({c:'warn',t:'🔍 SEOにまだ改善の余地があります。コンテンツ構成を見直すことで集客力が向上します。'});
+  if(pts.length===0) pts.push({c:'good',t:'✅ 基本的なパフォーマンスは良好です。デザインリニューアルやコンテンツ強化で競合との差別化をご提案できます。'});
+  return pts;
 }
 
-function getSalesPoints(data) {
-  const points = [];
-  if (data.mobile < 50) points.push('📱 モバイルの表示速度が非常に遅く、スマホで見たお客様が離脱しているリスクが高い状態です。');
-  else if (data.mobile < 70) points.push('📱 モバイルの表示速度がやや遅めです。スマホユーザーの離脱につながっている可能性があります。');
-  if (data.desktop < 50) points.push('💻 PCでの表示速度も遅く、第一印象で損をしている可能性があります。');
-  if (!data.isSSL) points.push('🔓 SSLが設定されていません。「保護されていない通信」と表示されており、お客様に不安を与えています。今すぐ対応が必要です。');
-  if (data.isWordPress) points.push('⚠️ WordPressが使われています。更新を怠ると不正アクセスやウイルス感染のリスクが高まります。');
-  if (data.risk === '低') points.push('✅ 基本的なパフォーマンスは良好です。さらなる集客強化やデザインリニューアルでより効果が出ます。');
-  if (points.length === 0) points.push('📊 診断完了です。詳しい改善提案はお気軽にご相談ください。');
-  return points;
+function drawRadar(scores){
+  if(radarChart){radarChart.destroy();radarChart=null}
+  const ctx=document.getElementById('radarChart').getContext('2d');
+  radarChart=new Chart(ctx,{
+    type:'radar',
+    data:{
+      labels:['モバイル速度','PC速度','SEO','セキュリティ','保守性'],
+      datasets:[{
+        label:'スコア',data:scores,
+        backgroundColor:'rgba(34,54,112,.15)',
+        borderColor:'#223670',borderWidth:2,
+        pointBackgroundColor:'#D0A900',pointBorderColor:'#223670',pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},color:'#888'},pointLabels:{font:{size:10}}}},
+      plugins:{legend:{display:false}}
+    }
+  });
 }
 
-async function diagnose() {
-  let url = document.getElementById('urlInput').value.trim();
-  if (!url) { alert('URLを入力してください'); return; }
-  if (!url.startsWith('http')) url = 'https://' + url;
+function setScore(id,tid,v){
+  const el=document.getElementById(id);
+  el.textContent=v;el.className='sc-num '+cls(v);
+  const tEl=document.getElementById(tid);
+  tEl.textContent=tag(v);tEl.className='sc-tag '+cls(v);
+}
 
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('errorBox').style.display = 'none';
+async function diagnose(){
+  let url=document.getElementById('urlInput').value.trim();
+  if(!url){alert('URLを入力してください');return}
+  if(!url.startsWith('http'))url='https://'+url;
 
-  try {
-    const res = await fetch(`${WORKER_URL}/?url=${encodeURIComponent(url)}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+  document.getElementById('resultArea').style.display='none';
+  document.getElementById('errorBox').style.display='none';
+  document.getElementById('loadingArea').style.display='block';
+  document.getElementById('diagBtn').classList.add('running');
+  document.getElementById('scanLine').style.display='block';
+  document.getElementById('btnLabel').textContent='診断中...';
 
-    const riskBanner = document.getElementById('riskBanner');
-    riskBanner.className = `risk-banner risk-${data.risk}`;
-    document.getElementById('riskTitle').textContent =
-      data.risk === '高' ? '⚠️ リスクが高い状態です' :
-      data.risk === '中' ? '△ 改善の余地があります' : '✅ 基本的に良好です';
-    document.getElementById('riskDesc').textContent = `診断URL: ${data.url}`;
+  let i=0;
+  const timer=setInterval(()=>{
+    i=(i+1)%msgs.length;
+    document.getElementById('loadingMsg').textContent=msgs[i];
+  },1500);
 
-    const mobileEl = document.getElementById('mobileScore');
-    mobileEl.textContent = data.mobile;
-    mobileEl.className = `score-num score-${getScoreClass(data.mobile)}`;
-    document.getElementById('mobileLabel').textContent = getScoreLabel(data.mobile);
+  try{
+    const res=await fetch(`${WORKER_URL}/?url=${encodeURIComponent(url)}`);
+    const d=await res.json();
+    if(d.error)throw new Error(d.error);
 
-    const desktopEl = document.getElementById('desktopScore');
-    desktopEl.textContent = data.desktop;
-    desktopEl.className = `score-num score-${getScoreClass(data.desktop)}`;
-    document.getElementById('desktopLabel').textContent = getScoreLabel(data.desktop);
+    clearInterval(timer);
+    document.getElementById('loadingArea').style.display='none';
+    document.getElementById('diagBtn').classList.remove('running');
+    document.getElementById('scanLine').style.display='none';
+    document.getElementById('btnLabel').textContent='診断する';
 
-    document.getElementById('sslStatus').textContent = data.isSSL ? '✅ 設定済み' : '❌ 未設定';
-    document.getElementById('wpStatus').textContent = data.isWordPress ? '⚠️ 使用中' : '✅ 非WordPress';
+    const sec=secScore(d.isSSL,d.isWordPress);
+    const scores=[d.mobile,d.desktop,d.seo||60,sec,d.isWordPress?50:85];
+    const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+    const risk=d.risk||( d.mobile<50?'高':d.mobile<70?'中':'低');
 
-    const salesEl = document.getElementById('salesPoints');
-    salesEl.innerHTML = getSalesPoints(data).map(p => `<div class="sales-point">${p}</div>`).join('');
+    const banner=document.getElementById('riskBanner');
+    banner.className='risk-banner '+(risk==='高'?'risk-high':risk==='中'?'risk-mid':'risk-low');
+    document.getElementById('riskTitle').textContent=risk==='高'?'⚠️ 早急な改善が必要な状態です':risk==='中'?'△ 改善の余地があります':'✅ 基本的に良好です';
+    document.getElementById('riskDesc').textContent=`総合スコア ${avg}/100　｜　${d.url}`;
 
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('result').style.display = 'block';
+    setScore('s-mobile','t-mobile',d.mobile);
+    setScore('s-desktop','t-desktop',d.desktop);
+    setScore('s-seo','t-seo',d.seo||60);
+    setScore('s-sec','t-sec',sec);
 
-  } catch(e) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('errorBox').style.display = 'block';
+    document.getElementById('sslVal').textContent=d.isSSL?'✅ 設定済み':'❌ 未設定';
+    document.getElementById('sslVal').className='info-val '+(d.isSSL?'c-ok':'c-danger');
+    document.getElementById('wpVal').textContent=d.isWordPress?'⚠️ 使用中':'✅ 非使用';
+    document.getElementById('wpVal').className='info-val '+(d.isWordPress?'c-warn':'c-ok');
+
+    document.getElementById('salesPoints').innerHTML=proposals(d).map(p=>`<div class="sp ${p.c}">${p.t}</div>`).join('');
+    document.getElementById('resultArea').style.display='block';
+    setTimeout(()=>drawRadar(scores),100);
+
+  }catch(e){
+    clearInterval(timer);
+    document.getElementById('loadingArea').style.display='none';
+    document.getElementById('errorBox').style.display='block';
+    document.getElementById('diagBtn').classList.remove('running');
+    document.getElementById('scanLine').style.display='none';
+    document.getElementById('btnLabel').textContent='診断する';
   }
 }
 
-document.getElementById('urlInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') diagnose();
+document.getElementById('urlInput').addEventListener('keypress',e=>{
+  if(e.key==='Enter')diagnose();
 });
 </script>
 </body>
