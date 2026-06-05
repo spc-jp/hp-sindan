@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-  <link rel="icon" href="https://spc-jp.github.io/hp-sindan/favicon.png" type="image/png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="https://spc-jp.github.io/hp-sindan/favicon.png" type="image/png">
 <title>ホームページ診断ツール | Smartpage</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -29,7 +29,6 @@ header p{font-size:12px;margin-top:4px;opacity:.8}
 .btn-diag.running{background:#223670;pointer-events:none}
 .scan-bar{position:absolute;left:0;top:-2px;width:100%;height:2px;background:rgba(255,255,255,.8);display:none;animation:scanY .65s linear infinite}
 @keyframes scanY{0%{top:-2px}100%{top:102%}}
-/* A案ローディング */
 .loading-scene{display:none;padding:2rem 0 1.5rem}
 .loading-inner{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap}
 .radar-stage{position:relative;width:220px;height:220px;flex-shrink:0}
@@ -90,7 +89,7 @@ header p{font-size:12px;margin-top:4px;opacity:.8}
 .urgent .prop-head{background:#c62828}.urgent .prop-body{border-color:#c62828;background:#fff8f8;color:#333}
 .warn .prop-head{background:#e65100}.warn .prop-body{border-color:#e65100;background:#fff9f5;color:#333}
 .good .prop-head{background:#2e7d32}.good .prop-body{border-color:#2e7d32;background:#f5fff6;color:#333}
-.pages-box{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.pages-box{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:16px}
 .pages-box h3{font-size:14px;font-weight:700;color:#223670;border-bottom:2px solid #223670;padding-bottom:8px;margin-bottom:14px}
 .page-card{border:1px solid #e0e0e0;border-radius:10px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:box-shadow .2s}
 .page-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
@@ -114,6 +113,12 @@ header p{font-size:12px;margin-top:4px;opacity:.8}
 .lv-中 .issue-badge{background:#e65100}
 .lv-低 .issue-badge{background:#2e7d32}
 .no-issue{font-size:12px;color:#2e7d32;padding:8px 0}
+
+/* PDFボタン */
+.btn-pdf{background:#223670;color:#fff;border:none;padding:14px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-pdf:hover{background:#1a2a56}
+.btn-pdf.generating{background:#888;pointer-events:none}
+
 @media(max-width:580px){.two-col{grid-template-columns:1fr}.loading-inner{gap:20px}.radar-stage{width:180px;height:180px}.ai-right img{width:90px;height:90px}}
 </style>
 </head>
@@ -135,17 +140,12 @@ header p{font-size:12px;margin-top:4px;opacity:.8}
   </div>
   <div class="error-box" id="errorBox">⚠️ 診断に失敗しました。URLを確認してもう一度お試しください。</div>
 
-  <!-- A案ローディング -->
   <div class="loading-scene" id="loadingScene">
     <div class="loading-inner">
       <div class="radar-stage">
-        <div class="ring ring1"></div>
-        <div class="ring ring2"></div>
-        <div class="ring ring3"></div>
-        <div class="ring ring4"></div>
-        <div class="ring ring5"></div>
-        <div class="sweep"></div>
-        <div class="sweep-glow"></div>
+        <div class="ring ring1"></div><div class="ring ring2"></div><div class="ring ring3"></div>
+        <div class="ring ring4"></div><div class="ring ring5"></div>
+        <div class="sweep"></div><div class="sweep-glow"></div>
         <div class="pdot" style="width:10px;height:10px;background:rgba(208,169,0,.9);top:28%;left:66%"></div>
         <div class="pdot" style="width:8px;height:8px;background:rgba(34,54,112,.8);top:65%;left:24%;animation-delay:.7s"></div>
         <div class="pdot" style="width:9px;height:9px;background:rgba(208,169,0,.7);top:40%;left:74%;animation-delay:1.3s"></div>
@@ -165,7 +165,6 @@ header p{font-size:12px;margin-top:4px;opacity:.8}
     </div>
   </div>
 
-  <!-- 結果エリア -->
   <div class="result-area" id="resultArea">
     <div class="ai-comment-row">
       <img src="https://spc-jp.github.io/hp-sindan/ai-chan.png" alt="アイ"/>
@@ -203,13 +202,21 @@ header p{font-size:12px;margin-top:4px;opacity:.8}
       <h3>📄 ページ別診断レポート</h3>
       <div id="pageCards"></div>
     </div>
+
+    <!-- PDFダウンロードボタン -->
+    <button class="btn-pdf" id="btnPdf" onclick="downloadPdf()">
+      📄 診断レポート.pdf をダウンロード
+    </button>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const WORKER='https://hp-sindan-api.yymmatsu.workers.dev';
 let radarInst=null,urlCount=0;
+let currentData=null,currentPages=[];
+
 addUrl();
 
 function addUrl(){
@@ -256,21 +263,21 @@ function aiComment(d){
   if(d.mobile<50)return 'モバイルスコアが'+d.mobile+'点とかなり遅い状態です。スマホユーザーが離脱しているかもしれません。リニューアルの効果が最も出やすいポイントです！';
   if(d.mobile<70)return 'モバイル速度が'+d.mobile+'点でやや遅めです。最適化で大きく改善できますよ😊';
   if(d.isWordPress)return 'WordPressを使用中ですね。セキュリティ対策とあわせたリニューアルをご提案できます！';
-  return '総合スコア良好です✨さらなる集客強化やデザインリニューアルで競合との差別化をご提案します！';
+  return '総合スコア良好です！さらなる集客強化やデザインリニューアルで競合との差別化をご提案します！';
 }
 
 function buildProposals(d){
   const pts=[];
   const mob=d.mobile,des=d.desktop,seo=d.seo||0;
-  if(!d.isSSL)pts.push({c:'urgent',h:'🔓 【緊急】SSL設定の対応',b:'SSLが未設定のため、ブラウザに「保護されていない通信」と表示されています。訪問者の信頼を大きく損なっており、Googleの検索順位にも悪影響があります。即時対応をご提案します。'});
-  if(mob<50)pts.push({c:'urgent',h:'📱 モバイル表示速度の大幅改善',b:'モバイルスコアが'+mob+'点と非常に低い状態です。画像圧縮・不要スクリプトの削除・キャッシュ設定を総合的に見直し、スコア70点以上を目標にリニューアルをご提案します。'});
-  else if(mob<70)pts.push({c:'warn',h:'📱 モバイル表示速度の改善',b:'モバイルスコアが'+mob+'点でやや遅い状態です。画像の最適化とキャッシュ設定の見直しで改善できます。'});
-  if(des<50)pts.push({c:'urgent',h:'💻 PC表示速度の改善',b:'PCスコアが'+des+'点と低く、第一印象で損をしています。サーバー設定・不要プラグインの削除・コード最適化をご提案します。'});
-  else if(des<70)pts.push({c:'warn',h:'💻 PC表示速度のチューニング',b:'PCスコアが'+des+'点でやや改善の余地があります。コード最適化とリソースの整理でさらに快適な閲覧環境を実現できます。'});
-  if(d.isWordPress)pts.push({c:'warn',h:'⚠️ WordPress セキュリティ・保守対策',b:'WordPressが使われています。更新が滞るとウイルス感染・不正アクセスのリスクが高まります。定期メンテナンスプランと、必要であればノーWordPress構成へのリニューアルをご提案します。'});
-  if(seo>0&&seo<50)pts.push({c:'urgent',h:'🔍 SEO・集客力の緊急改善',b:'SEOスコアが'+seo+'点と低く、検索結果で不利な状態です。タイトルタグ・メタディスクリプション・見出し構造の整備をご提案します。'});
-  else if(seo>0&&seo<70)pts.push({c:'warn',h:'🔍 SEO・集客力の強化',b:'SEOスコアが'+seo+'点でまだ改善の余地があります。コンテンツ構成の見直しで集客力向上をご提案します。'});
-  if(pts.length===0)pts.push({c:'good',h:'✅ 総合的に良好な状態です',b:'基本的なパフォーマンスは良好です。デザインリニューアルやコンテンツ強化・SNS連携で競合との差別化をご提案できます。'});
+  if(!d.isSSL)pts.push({c:'urgent',h:'【緊急】SSL設定の対応',b:'SSLが未設定のため、ブラウザに「保護されていない通信」と表示されています。訪問者の信頼を大きく損なっており、Googleの検索順位にも悪影響があります。即時対応をご提案します。'});
+  if(mob<50)pts.push({c:'urgent',h:'モバイル表示速度の大幅改善',b:'モバイルスコアが'+mob+'点と非常に低い状態です。画像圧縮・不要スクリプトの削除・キャッシュ設定を総合的に見直し、スコア70点以上を目標にリニューアルをご提案します。'});
+  else if(mob<70)pts.push({c:'warn',h:'モバイル表示速度の改善',b:'モバイルスコアが'+mob+'点でやや遅い状態です。画像の最適化とキャッシュ設定の見直しで改善できます。'});
+  if(des<50)pts.push({c:'urgent',h:'PC表示速度の改善',b:'PCスコアが'+des+'点と低く、第一印象で損をしています。サーバー設定・不要プラグインの削除・コード最適化をご提案します。'});
+  else if(des<70)pts.push({c:'warn',h:'PC表示速度のチューニング',b:'PCスコアが'+des+'点でやや改善の余地があります。コード最適化とリソースの整理でさらに快適な閲覧環境を実現できます。'});
+  if(d.isWordPress)pts.push({c:'warn',h:'WordPress セキュリティ・保守対策',b:'WordPressが使われています。更新が滞るとウイルス感染・不正アクセスのリスクが高まります。定期メンテナンスプランと、必要であればノーWordPress構成へのリニューアルをご提案します。'});
+  if(seo>0&&seo<50)pts.push({c:'urgent',h:'SEO・集客力の緊急改善',b:'SEOスコアが'+seo+'点と低く、検索結果で不利な状態です。タイトルタグ・メタディスクリプション・見出し構造の整備をご提案します。'});
+  else if(seo>0&&seo<70)pts.push({c:'warn',h:'SEO・集客力の強化',b:'SEOスコアが'+seo+'点でまだ改善の余地があります。コンテンツ構成の見直しで集客力向上をご提案します。'});
+  if(pts.length===0)pts.push({c:'good',h:'総合的に良好な状態です',b:'基本的なパフォーマンスは良好です。デザインリニューアルやコンテンツ強化・SNS連携で競合との差別化をご提案できます。'});
   return pts;
 }
 
@@ -279,19 +286,16 @@ function buildPageCards(pages){
     const sigCls=p.risk==='高'?'signal-high':p.risk==='中'?'signal-mid':'signal-low';
     const issues=p.issues&&p.issues.length>0
       ?p.issues.map(function(iss){return '<li class="issue-item lv-'+iss.level+'"><span class="issue-badge">'+iss.level+'</span>'+iss.text+'</li>';}).join('')
-      :'<div class="no-issue">✅ 特に問題は検出されませんでした</div>';
+      :'<div class="no-issue">特に問題は検出されませんでした</div>';
     const mobColor=p.mobile<50?'#c62828':p.mobile<70?'#e65100':'#2e7d32';
     const seoColor=(p.seo||0)<50?'#c62828':(p.seo||0)<70?'#e65100':'#2e7d32';
     return '<div class="page-card" id="pageCard'+i+'" onclick="toggleCard('+i+')">'
-      +'<div class="page-card-head">'
-      +'<div class="signal '+sigCls+'"></div>'
+      +'<div class="page-card-head"><div class="signal '+sigCls+'"></div>'
       +'<div class="page-title">'+p.title+'</div>'
-      +'<div class="page-scores">'
-      +'<div class="page-score-item">📱<span style="color:'+mobColor+'">'+p.mobile+'</span></div>'
-      +'<div class="page-score-item">SEO<span style="color:'+seoColor+'">'+(p.seo||'–')+'</span></div>'
-      +'</div><span class="chevron">▼</span></div>'
-      +'<div class="page-detail" id="pageDetail'+i+'">'
-      +'<div class="page-url">'+p.url+'</div>'
+      +'<div class="page-scores"><div class="page-score-item">📱<span style="color:'+mobColor+'">'+p.mobile+'</span></div>'
+      +'<div class="page-score-item">SEO<span style="color:'+seoColor+'">'+(p.seo||'–')+'</span></div></div>'
+      +'<span class="chevron">▼</span></div>'
+      +'<div class="page-detail" id="pageDetail'+i+'"><div class="page-url">'+p.url+'</div>'
       +'<ul class="issue-list">'+issues+'</ul></div></div>';
   }).join('');
 }
@@ -345,6 +349,8 @@ async function diagnose(){
     document.getElementById('progressFill').style.width='100%';
     document.getElementById('progressLabel').textContent='診断完了！';
     clearInterval(timer);
+    currentData=topData;
+    currentPages=pages;
     setTimeout(function(){renderResult(topData,pages);},600);
   }catch(e){
     clearInterval(timer);
@@ -370,15 +376,15 @@ function renderResult(d,pages){
   document.getElementById('aiBubble').textContent=aiComment(d);
   const banner=document.getElementById('riskBanner');
   banner.className='risk-banner '+(risk==='高'?'risk-high':risk==='中'?'risk-mid':'risk-low');
-  document.getElementById('riskTitle').textContent=risk==='高'?'⚠️ 早急な改善が必要な状態です':risk==='中'?'△ 改善の余地があります':'✅ 基本的に良好です';
-  document.getElementById('riskDesc').textContent='総合スコア '+avg+'/100　｜　'+d.url;
+  document.getElementById('riskTitle').textContent=risk==='高'?'早急な改善が必要な状態です':risk==='中'?'改善の余地があります':'基本的に良好です';
+  document.getElementById('riskDesc').textContent='総合スコア '+avg+'/100　|　'+d.url;
   setScore('s-mobile','t-mobile',d.mobile);
   setScore('s-desktop','t-desktop',d.desktop);
   setScore('s-seo','t-seo',d.seo||0);
   setScore('s-sec','t-sec',sec);
-  document.getElementById('sslVal').textContent=d.isSSL?'✅ 設定済み':'❌ 未設定';
+  document.getElementById('sslVal').textContent=d.isSSL?'設定済み':'未設定';
   document.getElementById('sslVal').className='ic-val '+(d.isSSL?'c-ok':'c-danger');
-  document.getElementById('wpVal').textContent=d.isWordPress?'⚠️ 使用中':'✅ 非使用';
+  document.getElementById('wpVal').textContent=d.isWordPress?'使用中':'非使用';
   document.getElementById('wpVal').className='ic-val '+(d.isWordPress?'c-warn':'c-ok');
   document.getElementById('proposalPoints').innerHTML=buildProposals(d).map(function(p,i){
     return '<div class="prop-item '+p.c+'" style="animation-delay:'+(i*.12+.1)+'s"><div class="prop-head">'+p.h+'</div><div class="prop-body">'+p.b+'</div></div>';
@@ -389,6 +395,213 @@ function renderResult(d,pages){
   }
   document.getElementById('resultArea').style.display='block';
   setTimeout(function(){drawRadar(scores);},150);
+}
+
+/* ===== PDF生成 ===== */
+function downloadPdf(){
+  if(!currentData)return;
+  const btn=document.getElementById('btnPdf');
+  btn.classList.add('generating');
+  btn.textContent='生成中...';
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,margin=18;
+  let y=margin;
+
+  // フォント（日本語はUnicode対応が必要なため英字で出力）
+  const today=new Date();
+  const dateStr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+
+  const d=currentData;
+  const sec=secScore(d.isSSL,d.isWordPress);
+  const scores=[d.mobile,d.desktop,d.seo||0,sec,d.isWordPress?50:85];
+  const avg=Math.round(scores.reduce(function(a,b){return a+b;})/scores.length);
+  const risk=(!d.isSSL||d.mobile<50)?'高':d.mobile<70?'中':'低';
+  const riskColor=risk==='高'?[198,40,40]:risk==='中'?[230,81,0]:[46,125,50];
+
+  // ヘッダー背景
+  doc.setFillColor(34,54,112);
+  doc.rect(0,0,W,28,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica','bold');
+  doc.text('Homepage Diagnosis Report',margin,12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('AI Navigator "AI-chan" | Powered by Smile Plus Consulting',margin,19);
+  doc.text(dateStr,W-margin,19,{align:'right'});
+  y=36;
+
+  // 診断URL
+  doc.setTextColor(80,80,80);
+  doc.setFontSize(9);
+  doc.text('URL: '+d.url,margin,y);
+  y+=8;
+
+  // リスクバナー
+  doc.setFillColor(riskColor[0],riskColor[1],riskColor[2]);
+  doc.roundedRect(margin,y,W-margin*2,12,2,2,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  const riskText=risk==='高'?'Risk: HIGH - Urgent improvement needed':risk==='中'?'Risk: MEDIUM - Room for improvement':'Risk: LOW - Generally good condition';
+  doc.text(riskText,margin+4,y+8);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.text('Total Score: '+avg+'/100',W-margin-4,y+8,{align:'right'});
+  y+=18;
+
+  // スコア表
+  doc.setTextColor(34,54,112);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.text('Score Summary',margin,y);
+  y+=5;
+  doc.setDrawColor(34,54,112);
+  doc.line(margin,y,W-margin,y);
+  y+=6;
+
+  const scoreItems=[
+    ['Mobile Speed',d.mobile],
+    ['PC Speed',d.desktop],
+    ['SEO',d.seo||0],
+    ['Security',sec],
+    ['Maintainability',d.isWordPress?50:85]
+  ];
+  const colW=(W-margin*2)/scoreItems.length;
+  scoreItems.forEach(function(item,i){
+    const x=margin+i*colW;
+    const score=item[1];
+    const color=score<50?[198,40,40]:score<70?[230,81,0]:[46,125,50];
+    doc.setFillColor(247,248,250);
+    doc.roundedRect(x+1,y,colW-2,20,2,2,'F');
+    doc.setTextColor(120,120,120);
+    doc.setFontSize(7);
+    doc.setFont('helvetica','normal');
+    doc.text(item[0],x+colW/2,y+6,{align:'center'});
+    doc.setTextColor(color[0],color[1],color[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica','bold');
+    doc.text(''+score,x+colW/2,y+15,{align:'center'});
+  });
+  y+=26;
+
+  // SSL/WordPress
+  doc.setFillColor(247,248,250);
+  doc.roundedRect(margin,y,(W-margin*2)/2-3,10,2,2,'F');
+  doc.setTextColor(80,80,80);
+  doc.setFontSize(8);
+  doc.setFont('helvetica','normal');
+  doc.text('SSL: '+(d.isSSL?'Configured':'Not configured'),margin+4,y+6.5);
+  doc.setFillColor(247,248,250);
+  doc.roundedRect(margin+(W-margin*2)/2+3,y,(W-margin*2)/2-3,10,2,2,'F');
+  doc.text('WordPress: '+(d.isWordPress?'In use':'Not used'),margin+(W-margin*2)/2+7,y+6.5);
+  y+=16;
+
+  // ご提案内容
+  doc.setTextColor(34,54,112);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.text('Proposal / Recommendations',margin,y);
+  y+=5;
+  doc.setDrawColor(34,54,112);
+  doc.line(margin,y,W-margin,y);
+  y+=6;
+
+  const proposals=buildProposalsData(d);
+  proposals.forEach(function(p){
+    if(y>260){doc.addPage();y=margin;}
+    const headColor=p.c==='urgent'?[198,40,40]:p.c==='warn'?[230,81,0]:[46,125,50];
+    doc.setFillColor(headColor[0],headColor[1],headColor[2]);
+    doc.roundedRect(margin,y,W-margin*2,7,1,1,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.text(p.h,margin+3,y+5);
+    y+=8;
+    doc.setFillColor(p.c==='urgent'?[255,248,248]:p.c==='warn'?[255,249,245]:[245,255,246]);
+    const bodyLines=doc.splitTextToSize(p.b,W-margin*2-6);
+    const bodyH=bodyLines.length*4+4;
+    doc.roundedRect(margin,y,W-margin*2,bodyH,1,1,'F');
+    doc.setTextColor(60,60,60);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','normal');
+    doc.text(bodyLines,margin+3,y+4);
+    y+=bodyH+4;
+  });
+
+  // ページ別診断
+  if(currentPages&&currentPages.length>0){
+    if(y>230){doc.addPage();y=margin;}
+    doc.setTextColor(34,54,112);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','bold');
+    doc.text('Page-by-Page Diagnosis',margin,y);
+    y+=5;
+    doc.setDrawColor(34,54,112);
+    doc.line(margin,y,W-margin,y);
+    y+=6;
+    currentPages.forEach(function(p){
+      if(y>260){doc.addPage();y=margin;}
+      const rColor=p.risk==='高'?[198,40,40]:p.risk==='中'?[230,81,0]:[46,125,50];
+      doc.setFillColor(rColor[0],rColor[1],rColor[2]);
+      doc.circle(margin+3,y+3,2,'F');
+      doc.setTextColor(40,40,40);
+      doc.setFontSize(9);
+      doc.setFont('helvetica','bold');
+      doc.text(p.title,margin+8,y+5);
+      doc.setTextColor(100,100,100);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.text('Mobile:'+p.mobile+' / SEO:'+(p.seo||'-'),W-margin,y+5,{align:'right'});
+      y+=8;
+      if(p.issues&&p.issues.length>0){
+        p.issues.slice(0,4).forEach(function(iss){
+          if(y>268)return;
+          const iColor=iss.level==='高'?[198,40,40]:iss.level==='中'?[230,81,0]:[46,125,50];
+          doc.setFillColor(iColor[0],iColor[1],iColor[2]);
+          doc.roundedRect(margin+4,y,8,4,1,1,'F');
+          doc.setTextColor(255,255,255);
+          doc.setFontSize(5.5);
+          doc.text(iss.level,margin+8,y+3,{align:'center'});
+          doc.setTextColor(70,70,70);
+          doc.setFontSize(7);
+          const issLines=doc.splitTextToSize(iss.text,W-margin*2-16);
+          doc.text(issLines[0],margin+14,y+3);
+          y+=5.5;
+        });
+      }
+      y+=3;
+    });
+  }
+
+  // フッター
+  doc.setFillColor(34,54,112);
+  doc.rect(0,285,W,12,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica','normal');
+  doc.text('Smile Plus Consulting | AI Navigator "AI-chan" | '+dateStr,W/2,292,{align:'center'});
+
+  doc.save('診断レポート.pdf');
+  btn.classList.remove('generating');
+  btn.textContent='📄 診断レポート.pdf をダウンロード';
+}
+
+function buildProposalsData(d){
+  const pts=[];
+  const mob=d.mobile,des=d.desktop,seo=d.seo||0;
+  if(!d.isSSL)pts.push({c:'urgent',h:'[Urgent] SSL Configuration',b:'SSL is not configured. Browsers display "Not Secure" warning, significantly damaging visitor trust and Google search ranking. Immediate action recommended.'});
+  if(mob<50)pts.push({c:'urgent',h:'Major Mobile Speed Improvement Required',b:'Mobile score is '+mob+' points - very slow. Most smartphone users may be leaving before the page loads. Image compression, script removal, and cache settings should be reviewed comprehensively.'});
+  else if(mob<70)pts.push({c:'warn',h:'Mobile Speed Improvement',b:'Mobile score is '+mob+' points - slightly slow. Image optimization and cache configuration improvements are recommended.'});
+  if(des<50)pts.push({c:'urgent',h:'PC Display Speed Improvement',b:'PC score is '+des+' points - low, creating a poor first impression. Server settings, plugin removal, and code optimization are recommended.'});
+  else if(des<70)pts.push({c:'warn',h:'PC Speed Tuning',b:'PC score is '+des+' points with some room for improvement. Code optimization and resource management can enhance user experience.'});
+  if(d.isWordPress)pts.push({c:'warn',h:'WordPress Security & Maintenance',b:'WordPress is in use. Delayed updates increase risk of virus infection and unauthorized access. Regular maintenance plan or migration to non-WordPress structure recommended.'});
+  if(seo>0&&seo<50)pts.push({c:'urgent',h:'SEO & Traffic Improvement (Urgent)',b:'SEO score is '+seo+' points - low, putting the site at a disadvantage in search results. Title tags, meta descriptions, and heading structure improvements are recommended.'});
+  else if(seo>0&&seo<70)pts.push({c:'warn',h:'SEO & Traffic Enhancement',b:'SEO score is '+seo+' points with room for improvement. Content structure review can increase traffic.'});
+  if(pts.length===0)pts.push({c:'good',h:'Overall Good Performance',b:'Basic performance is good. Design renewal, content enhancement, and SNS integration can help differentiate from competitors.'});
+  return pts;
 }
 </script>
 </body>
