@@ -3,728 +3,199 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚽ ワールドカップ×税金クイズ</title>
+<title>ホームページ診断ツール</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --blue:#003087;
-  --blue2:#0057b8;
-  --blue3:#1a73e8;
-  --red:#cc0000;
-  --red2:#e83030;
-  --white:#ffffff;
-  --gold:#ffd700;
-  --gold2:#f5a623;
-  --bg:#0a0e2e;
-  --bg2:#111840;
-  --bg3:#1a2456;
-  --card:#1e2d6b;
-  --correct:#00c853;
-  --wrong:#ff3d3d;
-  --text:#ffffff;
-  --text2:#b0c4ff;
-}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',Meiryo,sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
-}
-
-/* 星の背景 */
-.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
-.star{position:absolute;border-radius:50%;background:white;animation:twinkle linear infinite;}
-@keyframes twinkle{0%,100%{opacity:0.2;transform:scale(1);}50%{opacity:1;transform:scale(1.4);}}
-
-/* メインラッパー */
-#app{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:16px;}
-
-/* ヘッダー */
-.header{text-align:center;padding:24px 16px 16px;position:relative;}
-.header-badge{
-  display:inline-block;
-  background:linear-gradient(135deg,var(--red),var(--red2));
-  color:white;font-size:11px;font-weight:700;
-  padding:4px 14px;border-radius:20px;
-  letter-spacing:1px;margin-bottom:10px;
-  text-transform:uppercase;
-}
-.header h1{
-  font-size:clamp(22px,5vw,36px);
-  font-weight:900;
-  background:linear-gradient(135deg,var(--white),var(--gold),var(--white));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  line-height:1.2;margin-bottom:6px;
-}
-.header p{color:var(--text2);font-size:14px;}
-.flag-row{display:flex;justify-content:center;gap:8px;margin-top:12px;font-size:28px;}
-
-/* スタート画面 */
-#start-screen{text-align:center;padding:20px 0;}
-.start-card{
-  background:var(--card);
-  border:1px solid rgba(255,215,0,0.3);
-  border-radius:20px;
-  padding:32px 24px;
-  margin-bottom:20px;
-}
-.start-card h2{font-size:20px;color:var(--gold);margin-bottom:16px;}
-.info-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0;
-}
-.info-item{
-  background:var(--bg2);border-radius:12px;padding:16px;
-  border:1px solid rgba(255,255,255,0.1);
-}
-.info-item .num{font-size:32px;font-weight:900;color:var(--gold);}
-.info-item .label{font-size:12px;color:var(--text2);margin-top:4px;}
-.category-list{text-align:left;margin:16px 0;}
-.category-item{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 12px;border-radius:10px;
-  background:var(--bg2);margin-bottom:8px;
-  border-left:3px solid var(--gold2);
-  font-size:14px;
-}
-.cat-icon{font-size:20px;}
-.btn-start{
-  display:block;width:100%;
-  background:linear-gradient(135deg,var(--blue2),var(--blue3));
-  color:white;border:none;
-  padding:18px;border-radius:14px;
-  font-size:18px;font-weight:700;cursor:pointer;
-  margin-top:16px;
-  transition:transform 0.15s,box-shadow 0.15s;
-  box-shadow:0 4px 20px rgba(0,87,184,0.5);
-  letter-spacing:1px;
-}
-.btn-start:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,87,184,0.7);}
-.btn-start:active{transform:translateY(0);}
-
-/* クイズ画面 */
-#quiz-screen{display:none;}
-
-/* プログレス */
-.progress-bar-wrap{
-  display:flex;align-items:center;gap:12px;
-  margin-bottom:16px;
-}
-.progress-bg{
-  flex:1;height:8px;background:var(--bg3);
-  border-radius:4px;overflow:hidden;
-}
-.progress-fill{
-  height:100%;
-  background:linear-gradient(90deg,var(--blue2),var(--gold));
-  border-radius:4px;
-  transition:width 0.4s ease;
-}
-.progress-label{font-size:13px;color:var(--text2);white-space:nowrap;}
-
-/* スコア・タイマー行 */
-.status-row{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:16px;
-}
-.score-badge{
-  background:var(--bg3);border-radius:12px;padding:8px 16px;
-  display:flex;align-items:center;gap:8px;font-size:14px;
-}
-.score-num{font-size:22px;font-weight:900;color:var(--gold);}
-
-/* 円形タイマー */
-.timer-wrap{position:relative;width:64px;height:64px;}
-.timer-svg{transform:rotate(-90deg);}
-.timer-track{fill:none;stroke:var(--bg3);stroke-width:5;}
-.timer-arc{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset 0.9s linear,stroke 0.3s;}
-.timer-num{
-  position:absolute;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  font-size:18px;font-weight:900;
-  line-height:1;
-}
-.timer-num.warn{color:var(--wrong);animation:pulse 0.5s infinite;}
-@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.2);}}
-
-/* カテゴリーバッジ */
-.cat-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(255,215,0,0.15);
-  border:1px solid rgba(255,215,0,0.4);
-  color:var(--gold2);font-size:12px;
-  padding:5px 12px;border-radius:20px;
-  margin-bottom:14px;
-}
-
-/* 問題カード */
-.question-card{
-  background:var(--card);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:20px;padding:24px;
-  margin-bottom:16px;
-  animation:slideIn 0.35s ease;
-}
-@keyframes slideIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-.q-num{font-size:12px;color:var(--text2);margin-bottom:10px;}
-.q-text{font-size:clamp(16px,3vw,20px);font-weight:700;line-height:1.5;color:var(--white);}
-
-/* 選択肢 */
-.choices{display:grid;gap:10px;}
-.choice-btn{
-  width:100%;background:var(--bg2);
-  border:1.5px solid rgba(255,255,255,0.15);
-  border-radius:14px;padding:14px 16px;
-  color:var(--white);font-size:15px;
-  cursor:pointer;text-align:left;
-  display:flex;align-items:center;gap:12px;
-  transition:all 0.2s;
-  font-family:inherit;line-height:1.4;
-}
-.choice-btn:hover:not(:disabled){
-  background:var(--bg3);
-  border-color:var(--blue3);
-  transform:translateX(4px);
-}
-.choice-label{
-  min-width:28px;height:28px;border-radius:50%;
-  background:var(--bg3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;color:var(--text2);
-  flex-shrink:0;
-}
-.choice-btn.correct{background:rgba(0,200,83,0.2);border-color:var(--correct);}
-.choice-btn.correct .choice-label{background:var(--correct);color:white;}
-.choice-btn.wrong{background:rgba(255,61,61,0.15);border-color:var(--wrong);}
-.choice-btn.wrong .choice-label{background:var(--wrong);color:white;}
-.choice-btn:disabled{cursor:default;}
-
-/* 解説 */
-.explanation{
-  background:var(--bg2);border-radius:14px;
-  padding:16px;margin-top:12px;
-  border-left:3px solid var(--gold);
-  font-size:14px;line-height:1.7;color:var(--text2);
-  animation:fadeIn 0.3s ease;
-}
-@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-.explanation strong{color:var(--gold);font-size:13px;display:block;margin-bottom:4px;}
-
-/* 正誤エフェクト */
-.result-flash{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  pointer-events:none;z-index:999;
-  opacity:0;transition:opacity 0.15s;
-}
-.result-flash.show{opacity:1;}
-.result-flash.correct-flash{background:rgba(0,200,83,0.12);}
-.result-flash.wrong-flash{background:rgba(255,61,61,0.12);}
-
-/* 次へボタン */
-.btn-next{
-  display:block;width:100%;
-  background:linear-gradient(135deg,var(--blue2),var(--blue3));
-  color:white;border:none;
-  padding:16px;border-radius:14px;
-  font-size:16px;font-weight:700;cursor:pointer;
-  margin-top:12px;
-  transition:transform 0.15s;
-  font-family:inherit;
-  box-shadow:0 4px 16px rgba(0,87,184,0.4);
-}
-.btn-next:hover{transform:translateY(-2px);}
-
-/* 紙吹雪 */
-.confetti{
-  position:fixed;top:-10px;z-index:9999;
-  pointer-events:none;
-  width:10px;height:10px;border-radius:2px;
-  animation:confettiFall linear forwards;
-}
-@keyframes confettiFall{
-  0%{transform:translateY(-10px) rotate(0deg);opacity:1;}
-  100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
-}
-
-/* ゴールアニメ */
-.goal-overlay{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  display:none;align-items:center;justify-content:center;
-  z-index:1000;pointer-events:none;
-  flex-direction:column;
-}
-.goal-text{
-  font-size:clamp(48px,12vw,96px);font-weight:900;
-  color:var(--gold);
-  text-shadow:0 0 40px rgba(255,215,0,0.8);
-  animation:goalAnim 0.8s ease forwards;
-  line-height:1;
-}
-@keyframes goalAnim{
-  0%{transform:scale(0.3) rotate(-10deg);opacity:0;}
-  60%{transform:scale(1.2) rotate(3deg);}
-  100%{transform:scale(1) rotate(0deg);opacity:1;}
-}
-.goal-sub{
-  font-size:18px;color:white;margin-top:8px;
-  animation:fadeIn 0.5s 0.4s both;
-}
-.goal-ball{
-  font-size:60px;margin-bottom:16px;
-  animation:ballBounce 0.6s ease infinite alternate;
-}
-@keyframes ballBounce{0%{transform:translateY(0);}100%{transform:translateY(-20px);}}
-
-/* 歓声テキスト */
-.cheer-word{
-  position:fixed;pointer-events:none;z-index:998;
-  font-size:clamp(20px,5vw,36px);font-weight:900;
-  animation:cheerFloat 1.2s ease forwards;
-}
-@keyframes cheerFloat{
-  0%{transform:translateY(0) scale(0.5);opacity:1;}
-  100%{transform:translateY(-120px) scale(1.2);opacity:0;}
-}
-
-/* 結果画面 */
-#result-screen{display:none;text-align:center;padding:20px 0;}
-.result-card{
-  background:var(--card);border:1px solid rgba(255,215,0,0.3);
-  border-radius:20px;padding:32px 24px;margin-bottom:20px;
-}
-.trophy{font-size:72px;animation:trophyWiggle 0.8s ease infinite alternate;}
-@keyframes trophyWiggle{0%{transform:rotate(-8deg);}100%{transform:rotate(8deg);}}
-.result-score{
-  font-size:56px;font-weight:900;
-  color:var(--gold);margin:12px 0;
-  text-shadow:0 0 30px rgba(255,215,0,0.5);
-}
-.result-label{font-size:16px;color:var(--text2);margin-bottom:20px;}
-.result-rank{
-  font-size:22px;font-weight:700;
-  padding:14px 24px;border-radius:14px;
-  margin:16px auto;display:inline-block;
-}
-.rank-s{background:linear-gradient(135deg,#ffd700,#ff8c00);color:#4a2000;}
-.rank-a{background:linear-gradient(135deg,#c0c0c0,#808080);color:#1a1a1a;}
-.rank-b{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff;}
-.rank-c{background:var(--bg3);color:var(--text2);}
-.stats-grid{
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0;
-}
-.stat-item{background:var(--bg2);border-radius:12px;padding:14px 8px;}
-.stat-num{font-size:24px;font-weight:900;color:var(--gold);}
-.stat-label{font-size:11px;color:var(--text2);margin-top:4px;}
-.cta-box{
-  background:var(--bg2);border-radius:16px;padding:20px;
-  border:1px solid rgba(255,215,0,0.2);margin-top:20px;
-  text-align:center;
-}
-.cta-box p{font-size:14px;color:var(--text2);margin-bottom:12px;line-height:1.7;}
-.btn-retry{
-  display:block;width:100%;
-  background:linear-gradient(135deg,var(--red),var(--red2));
-  color:white;border:none;
-  padding:16px;border-radius:14px;
-  font-size:16px;font-weight:700;cursor:pointer;
-  font-family:inherit;margin-bottom:10px;
-  transition:transform 0.15s;
-  box-shadow:0 4px 16px rgba(204,0,0,0.4);
-}
-.btn-retry:hover{transform:translateY(-2px);}
-.btn-share{
-  display:block;width:100%;
-  background:var(--bg3);
-  color:white;border:1px solid rgba(255,255,255,0.2);
-  padding:14px;border-radius:14px;
-  font-size:14px;cursor:pointer;font-family:inherit;
-  transition:transform 0.15s;
-}
-.btn-share:hover{transform:translateY(-2px);}
-
-/* フッター */
-.footer{text-align:center;padding:20px;font-size:12px;color:var(--text2);opacity:0.6;}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: #f0f4f8; color: #333; }
+  header { background: #223670; color: white; padding: 20px; text-align: center; }
+  header h1 { font-size: 22px; }
+  header p { font-size: 13px; margin-top: 5px; opacity: 0.8; }
+  .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+  .input-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .input-box h2 { font-size: 18px; margin-bottom: 15px; color: #223670; }
+  .input-row { display: flex; gap: 10px; }
+  input[type="text"] { flex: 1; padding: 12px 16px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
+  input[type="text"]:focus { border-color: #223670; }
+  button { background: #D0A900; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: bold; }
+  button:hover { background: #b89200; }
+  .loading { text-align: center; padding: 40px; display: none; }
+  .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: #223670; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result { display: none; margin-top: 20px; }
+  .risk-banner { border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; color: white; }
+  .risk-高 { background: #e53935; }
+  .risk-中 { background: #fb8c00; }
+  .risk-低 { background: #43a047; }
+  .risk-banner h2 { font-size: 22px; }
+  .risk-banner p { font-size: 14px; margin-top: 5px; opacity: 0.9; }
+  .scores { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+  .score-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .score-card h3 { font-size: 13px; color: #888; margin-bottom: 10px; }
+  .score-num { font-size: 48px; font-weight: bold; line-height: 1; }
+  .score-label { font-size: 12px; margin-top: 5px; }
+  .score-高 { color: #e53935; }
+  .score-中 { color: #fb8c00; }
+  .score-低 { color: #43a047; }
+  .info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+  .info-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 12px; }
+  .info-icon { font-size: 28px; }
+  .info-text h3 { font-size: 13px; color: #888; }
+  .info-text p { font-size: 15px; font-weight: bold; margin-top: 2px; }
+  .sales-box { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .sales-box h3 { font-size: 16px; color: #223670; margin-bottom: 15px; border-bottom: 2px solid #223670; padding-bottom: 8px; }
+  .sales-point { background: #f8f9ff; border-left: 4px solid #223670; padding: 12px 16px; margin-bottom: 10px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; }
+  .error-box { background: #fff3f3; border: 1px solid #ffcdd2; border-radius: 12px; padding: 20px; text-align: center; color: #c62828; display: none; }
+  @media(max-width: 600px) {
+    .scores { grid-template-columns: 1fr 1fr; }
+    .info-cards { grid-template-columns: 1fr 1fr; }
+    .input-row { flex-direction: column; }
+  }
 </style>
 </head>
 <body>
+<header>
+  <h1>🔍 ホームページ診断ツール</h1>
+  <p>URLを入力するだけで、ホームページの課題を即診断します</p>
+</header>
 
-<div class="stars" id="stars"></div>
-<div class="result-flash" id="resultFlash"></div>
-<div class="goal-overlay" id="goalOverlay">
-  <div class="goal-ball">⚽</div>
-  <div class="goal-text" id="goalText">GOAL!</div>
-  <div class="goal-sub" id="goalSub">正解！</div>
-</div>
-
-<div id="app">
-  <div class="header">
-    <div class="header-badge">⚽ World Cup × Tax Quiz</div>
-    <h1>ワールドカップ<br>×税金クイズ</h1>
-    <p>世界の税金をサッカーで学ぼう！</p>
-    <div class="flag-row">🇯🇵🌍🇧🇷🇩🇪🇫🇷🇺🇸🌏</div>
+<div class="container">
+  <div class="input-box">
+    <h2>診断したいホームページのURLを入力してください</h2>
+    <div class="input-row">
+      <input type="text" id="urlInput" placeholder="https://example.com" />
+      <button onclick="diagnose()">診断する</button>
+    </div>
   </div>
 
-  <!-- スタート画面 -->
-  <div id="start-screen">
-    <div class="start-card">
-      <h2>🏆 クイズについて</h2>
-      <div class="info-grid">
-        <div class="info-item"><div class="num">50</div><div class="label">問題数（プール）</div></div>
-        <div class="info-item"><div class="num">10</div><div class="label">1回の出題数</div></div>
-        <div class="info-item"><div class="num">20</div><div class="label">秒 / 1問</div></div>
-        <div class="info-item"><div class="num">5</div><div class="label">カテゴリー</div></div>
-      </div>
-      <div class="category-list">
-        <div class="category-item"><span class="cat-icon">🌍</span>開催国の税率対決 (15問)</div>
-        <div class="category-item"><span class="cat-icon">⭐</span>有名選手と節税 (12問)</div>
-        <div class="category-item"><span class="cat-icon">💰</span>賞金と税金 (8問)</div>
-        <div class="category-item"><span class="cat-icon">🇯🇵</span>日本代表と税金 (10問)</div>
-        <div class="category-item"><span class="cat-icon">💡</span>世界の税金トリビア (5問)</div>
-      </div>
-      <button class="btn-start" onclick="startQuiz()">⚽ クイズ スタート！</button>
-    </div>
-    <div class="footer">監修・税率の最終確認は税理士さんにご相談ください</div>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Googleのデータで診断中です...<br>少々お待ちください（約10〜20秒）</p>
   </div>
 
-  <!-- クイズ画面 -->
-  <div id="quiz-screen">
-    <div class="progress-bar-wrap">
-      <div class="progress-bg"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-label" id="progressLabel">1 / 10</div>
-    </div>
-    <div class="status-row">
-      <div class="score-badge">🏆 <span class="score-num" id="scoreNum">0</span> pt</div>
-      <div class="timer-wrap">
-        <svg class="timer-svg" width="64" height="64" viewBox="0 0 64 64">
-          <circle class="timer-track" cx="32" cy="32" r="27"/>
-          <circle class="timer-arc" id="timerArc" cx="32" cy="32" r="27"
-            stroke-dasharray="169.6" stroke-dashoffset="0" stroke="var(--blue3)"/>
-        </svg>
-        <div class="timer-num" id="timerNum">20</div>
-      </div>
-    </div>
-    <div id="catBadge" class="cat-badge"></div>
-    <div class="question-card" id="questionCard">
-      <div class="q-num" id="qNum"></div>
-      <div class="q-text" id="qText"></div>
-    </div>
-    <div class="choices" id="choices"></div>
-    <div id="explanationBox" class="explanation" style="display:none;"></div>
-    <button class="btn-next" id="btnNext" style="display:none;" onclick="nextQuestion()">次の問題へ ▶</button>
+  <div class="error-box" id="errorBox">
+    <p>⚠️ 診断に失敗しました。URLを確認してもう一度お試しください。</p>
   </div>
 
-  <!-- 結果画面 -->
-  <div id="result-screen">
-    <div class="result-card">
-      <div class="trophy" id="trophyEmoji">🏆</div>
-      <div class="result-score" id="resultScore"></div>
-      <div class="result-label">/ 10点 満点</div>
-      <div class="result-rank" id="resultRank"></div>
-      <div class="stats-grid">
-        <div class="stat-item"><div class="stat-num" id="statCorrect"></div><div class="stat-label">正解数</div></div>
-        <div class="stat-item"><div class="stat-num" id="statTime"></div><div class="stat-label">平均秒数</div></div>
-        <div class="stat-item"><div class="stat-num" id="statRate"></div><div class="stat-label">正答率</div></div>
+  <div class="result" id="result">
+    <div class="risk-banner" id="riskBanner">
+      <h2 id="riskTitle"></h2>
+      <p id="riskDesc"></p>
+    </div>
+
+    <div class="scores">
+      <div class="score-card">
+        <h3>📱 モバイル速度</h3>
+        <div class="score-num" id="mobileScore">-</div>
+        <div class="score-label" id="mobileLabel"></div>
       </div>
-      <div class="cta-box">
-        <p>🧾 税金のことが気になったら<br>まずは税理士に相談してみませんか？<br>あなたのビジネスの「宝」を一緒に見つけます。</p>
+      <div class="score-card">
+        <h3>💻 PC速度</h3>
+        <div class="score-num" id="desktopScore">-</div>
+        <div class="score-label" id="desktopLabel"></div>
       </div>
     </div>
-    <button class="btn-retry" onclick="retryQuiz()">🔄 もう一度チャレンジ！</button>
-    <button class="btn-share" onclick="shareResult()">📤 結果をシェアする</button>
-    <div class="footer">⚽ ワールドカップ×税金クイズ｜Smile Plus Consulting</div>
+
+    <div class="info-cards">
+      <div class="info-card">
+        <div class="info-icon">🔒</div>
+        <div class="info-text">
+          <h3>SSL（セキュリティ）</h3>
+          <p id="sslStatus"></p>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">🌐</div>
+        <div class="info-text">
+          <h3>WordPress</h3>
+          <p id="wpStatus"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sales-box">
+      <h3>💬 営業トークのポイント</h3>
+      <div id="salesPoints"></div>
+    </div>
   </div>
 </div>
 
 <script>
-const QUESTIONS=[
-  // カテゴリー1: 開催国の税率対決
-  {cat:"🌍 開催国の税率対決",q:"EU加盟国の中で消費税率が最も高い国はどこ？",choices:["ドイツ（19%）","フランス（20%）","ハンガリー（27%）","スウェーデン（25%）"],ans:2,exp:"ハンガリーの消費税は27%でEU最高水準。日本の10%と比べると約3倍です。"},
-  {cat:"🌍 開催国の税率対決",q:"消費税（付加価値税）がゼロの国はどこ？",choices:["カタール","ブラジル","アルゼンチン","メキシコ"],ans:0,exp:"カタールは石油収入があるため消費税が存在しません。2022年W杯開催国です。"},
-  {cat:"🌍 開催国の税率対決",q:"日本の消費税10%、世界では高い？低い？",choices:["かなり高い方","平均より少し低い","世界最低水準","ちょうど平均"],ans:1,exp:"OECD平均は約19%。日本の10%は先進国の中ではむしろ低い水準です。"},
-  {cat:"🌍 開催国の税率対決",q:"所得税の最高税率が最も高い国はどこ？",choices:["アメリカ（37%）","日本（45%）","デンマーク（55%）","ドイツ（45%）"],ans:2,exp:"デンマークは地方税含めると55%超えも。高福祉国家は税率も高いです。"},
-  {cat:"🌍 開催国の税率対決",q:"2026年W杯開催国アメリカの連邦所得税最高税率は？",choices:["27%","37%","45%","50%"],ans:1,exp:"アメリカの連邦所得税最高税率は37%。ただし州税が別途かかる州もあります。"},
-  {cat:"🌍 開催国の税率対決",q:"2026W杯共同開催国メキシコの消費税率は？",choices:["8%","12%","16%","20%"],ans:2,exp:"メキシコの付加価値税（IVA）は16%。国境地帯は8%の特例があります。"},
-  {cat:"🌍 開催国の税率対決",q:"2026W杯共同開催国カナダの連邦消費税（GST）は？",choices:["3%","5%","8%","10%"],ans:1,exp:"カナダの連邦GSTは5%。州税が加わると最大15%になる州もあります。"},
-  {cat:"🌍 開催国の税率対決",q:"法人税率が最も低い主要国はどこ？",choices:["アイルランド（12.5%）","日本（23.2%）","アメリカ（21%）","フランス（25%）"],ans:0,exp:"アイルランドは法人税12.5%で有名。多くの多国籍企業がダブリンに拠点を置く理由です。"},
-  {cat:"🌍 開催国の税率対決",q:"サウジアラビアの個人所得税率は？",choices:["10%","20%","30%","0%"],ans:3,exp:"サウジアラビアは個人所得税がゼロ。ロナウドが移籍を選んだ理由のひとつです。"},
-  {cat:"🌍 開催国の税率対決",q:"ブラジルの消費税が複雑な理由は？",choices:["州ごとに税率が違うから","商品ごとに10種類以上の税がかかるから","外国人には免税だから","毎年変わるから"],ans:1,exp:"ブラジルは消費課税が複数重複する複雑な構造で、長年の税制改革の課題になっています。"},
-  {cat:"🌍 開催国の税率対決",q:"フランスの消費税（TVA）の標準税率は？",choices:["15%","18%","20%","23%"],ans:2,exp:"フランスのTVAは20%。ただし食料品や書籍は5.5%の軽減税率が適用されます。"},
-  {cat:"🌍 開催国の税率対決",q:"ドイツの消費税率は？",choices:["15%","17%","19%","21%"],ans:2,exp:"ドイツのMwStは19%。食料品は7%の軽減税率があり、日本の軽減税率制度に近い考え方です。"},
-  {cat:"🌍 開催国の税率対決",q:"スペインの付加価値税（IVA）標準税率は？",choices:["18%","21%","23%","25%"],ans:1,exp:"スペインのIVAは21%。観光大国のため軽減税率の対象品目が多いのも特徴です。"},
-  {cat:"🌍 開催国の税率対決",q:"オランダの消費税率は？",choices:["17%","19%","21%","23%"],ans:2,exp:"オランダのBTWは21%。EU域内では中程度の水準です。"},
-  {cat:"🌍 開催国の税率対決",q:"日本の法人税率（標準）は約何%？",choices:["15%","20%","23%","30%"],ans:2,exp:"日本の法人税率は23.2%。地方税を合わせた実効税率は約30%前後になります。"},
-  // カテゴリー2: 有名選手と節税
-  {cat:"⭐ 有名選手と節税",q:"ロナウドがサウジアラビアに移籍した税金的な理由は？",choices:["法人税が安いから","個人所得税がゼロだから","消費税が還付されるから","代理人手数料が非課税だから"],ans:1,exp:"サウジアラビアは個人所得税がゼロ。年俸200億円超でも全額手取りになる計算です。"},
-  {cat:"⭐ 有名選手と節税",q:"メッシがマイアミを選んだ税金的な理由は？",choices:["フロリダ州に州所得税がないから","アメリカの連邦税が安いから","マイアミ市が特別免税にしたから","サッカー選手は非課税だから"],ans:0,exp:"フロリダ州は州所得税ゼロ。カリフォルニア州なら13.3%の州税がかかります。"},
-  {cat:"⭐ 有名選手と節税",q:"スペインの「ベッカム法」とは？",choices:["外国人選手は所得税が5年間ゼロ","外国人選手の所得税率を一律24%に優遇","スポーツ選手の移籍金は非課税","代表選手は住民税免除"],ans:1,exp:"2005年導入のベッカム法は外国人高額所得者の税率を24%に固定。現在は廃止されています。"},
-  {cat:"⭐ 有名選手と節税",q:"モナコに住む選手が多い理由は？",choices:["気候が良いから","所得税がゼロだから","カジノの収入が非課税だから","EUの補助金が出るから"],ans:1,exp:"モナコは所得税ゼロの租税回避地。多くのアスリートが居住しています。"},
-  {cat:"⭐ 有名選手と節税",q:"イギリスの所得税最高税率は？",choices:["35%","40%","45%","50%"],ans:2,exp:"イギリスは45%。プレミアリーグ選手の多くが高額納税者になる理由です。"},
-  {cat:"⭐ 有名選手と節税",q:"海外でプレーする日本人選手、日本にも税金を払う必要がある？",choices:["常に払う必要がある","日本に住所がなければ原則不要","代表活動分だけ払う","年俸1億円以上なら払う"],ans:1,exp:"税法上の居住者でなければ日本の所得税は原則かかりません。ただし日本国内での収入は課税対象です。"},
-  {cat:"⭐ 有名選手と節税",q:"選手が複数の国でプレーした場合、税金はどこに払う？",choices:["国籍のある国に全額払う","年俸が最も高いシーズンの国に払う","各国でプレーした期間・収入に応じて分割","所属クラブのある国にまとめて払う"],ans:2,exp:"国際課税は複雑で、租税条約の有無や滞在日数によって変わります。海外プレーの選手に専門税理士が必須な理由です。"},
-  {cat:"⭐ 有名選手と節税",q:"ネイマールがパリに移籍した際の史上最高移籍金は？",choices:["約100億円","約150億円","約222億円","約300億円"],ans:2,exp:"2017年のネイマール移籍金は約2億2200万ユーロ（当時約280億円）。この移籍金にも課税関係が発生します。"},
-  {cat:"⭐ 有名選手と節税",q:"選手の肖像権収入、給与と税務上の扱いは同じ？",choices:["まったく同じ","肖像権は非課税","別の所得区分になることがあり節税に使われてきた","肖像権は法人税扱い"],ans:2,exp:"肖像権収入を法人経由にして給与と分離する手法が欧州で問題に。ロナウドもスペイン当局と係争しています。"},
-  {cat:"⭐ 有名選手と節税",q:"日本のプロサッカー選手、年俸1億円の場合の所得税率は？",choices:["23%","33%","43%","55%"],ans:2,exp:"日本の所得税は累進課税。1億円の年俸では最高税率45%に近い水準。住民税10%を加えると約55%が税負担になります。"},
-  {cat:"⭐ 有名選手と節税",q:"引退後に解説者やタレント活動をする元選手、税務上の扱いは？",choices:["引き続きスポーツ選手扱い","事業所得や給与所得として課税","引退後5年間は非課税","スポーツ年金として別扱い"],ans:1,exp:"引退後の収入は活動内容によって給与・事業・雑所得に分類されます。個人事務所設立で節税する元選手も多いです。"},
-  {cat:"⭐ 有名選手と節税",q:"欧州クラブが選手に支払う「サインオンボーナス」、課税される？",choices:["されない","給与と同様に課税される","100万円以下なら非課税","クラブが代わりに納税する"],ans:1,exp:"契約一時金も給与所得として課税対象。一括受取は高い税率がかかるため、分割受取にする選手もいます。"},
-  // カテゴリー3: 賞金と税金
-  {cat:"💰 賞金と税金",q:"2026年ワールドカップ優勝国に贈られる賞金は？",choices:["約30億円","約50億円","約70億円","約100億円"],ans:2,exp:"FIFAは2026年大会で総額1000億円超の賞金を設定。優勝賞金は約70億円規模になる見込みです。"},
-  {cat:"💰 賞金と税金",q:"ワールドカップの賞金、選手個人に課税される？",choices:["される","されない","国によって異なる","FIFAが代わりに払う"],ans:2,exp:"賞金の分配方法や課税は各国・各協会によって異なります。日本の場合は協会経由で分配され課税関係が生じます。"},
-  {cat:"💰 賞金と税金",q:"「国民栄誉賞」の賞金、課税される？",choices:["全額課税","非課税","半額が課税","受賞者が選べる"],ans:1,exp:"国民栄誉賞の賞金は非課税扱いとされています。ただし副賞の品物は価値によって課税対象になる場合があります。"},
-  {cat:"💰 賞金と税金",q:"サッカーくじ「toto」で1億円当たった場合の税金は？",choices:["かからない","約2000万円","約5000万円","全額課税"],ans:0,exp:"totoなどの公営競技の払戻金は非課税です。競馬・競輪も同様。ただし外れ馬券の経費計上問題など税務は奥深いです。"},
-  {cat:"💰 賞金と税金",q:"海外ギャンブルサイトで100万円勝った日本人、課税される？",choices:["されない","一時所得として課税される","雑所得として課税される","違法なので没収"],ans:2,exp:"海外ギャンブルの収益は雑所得として申告義務があります。無申告は脱税リスクがあります。"},
-  {cat:"💰 賞金と税金",q:"Jリーグクラブへのスポンサー費用、企業側の税務上の扱いは？",choices:["全額経費にならない","広告宣伝費として全額経費になる","寄付金扱いで一部しか経費にならない","損金算入不可"],ans:1,exp:"スポンサー費用は広告宣伝費として全額損金算入できます。地元クラブへの協賛が節税にもなる理由です。"},
-  {cat:"💰 賞金と税金",q:"公費でスタジアムを建てて民間クラブが使う構造の問題点は？",choices:["特にない","収益が民間クラブに入り公益性が問われる","建設費は非課税なので問題ない","国が全額補助するので自治体負担はない"],ans:1,exp:"公費でスタジアムを建てて民間クラブが使う構造は各国で議論になっています。日本でも自治体とクラブの費用分担が課題です。"},
-  {cat:"💰 賞金と税金",q:"選手がチャリティーで得た収益を認定NPOに寄付した場合は？",choices:["全額非課税","寄付金控除が使える場合がある","選手に所得税がかかる","寄付先が税金を払う"],ans:1,exp:"認定NPO法人などへの寄付は所得控除や税額控除が使えます。ただし選手自身への課税関係も整理が必要です。"},
-  // カテゴリー4: 日本代表と税金
-  {cat:"🇯🇵 日本代表と税金",q:"日本代表選手に支払われる「出場給」、課税される？",choices:["されない","給与所得として課税される","代表活動は非課税","協会が納税するので選手は不要"],ans:1,exp:"代表活動の報酬も給与所得として課税対象です。海外クラブ所属の選手は国際課税のルールも絡んできます。"},
-  {cat:"🇯🇵 日本代表と税金",q:"海外所属の日本代表選手が日本に長く滞在すると税務上どうなる？",choices:["日数が多いと日本の居住者と判定されるリスクがある","日数に応じて協会から追加報酬が出るから","日本での活動は全額免税になるから","特に理由はない"],ans:0,exp:"日本滞在日数が年間183日を超えると日本の税法上の居住者になる可能性があります。代表招集が多い選手は注意が必要です。"},
-  {cat:"🇯🇵 日本代表と税金",q:"Jリーガーが受け取る年俸、所得税の計算で使える控除は？",choices:["給与所得控除が使える","スポーツ選手は控除なし","一律50%控除","移籍金分は控除される"],ans:0,exp:"Jリーガーの年俸は給与所得扱いのため給与所得控除が適用されます。ただし高額年俸では控除額に上限があります。"},
-  {cat:"🇯🇵 日本代表と税金",q:"選手が自費で購入したスパイクやトレーニング用品、経費にできる？",choices:["できない","給与所得者は原則難しいが特定支出控除で対応できる場合がある","全額経費になる","領収書があれば何でも経費になる"],ans:1,exp:"給与所得者の経費計上は限られますが「特定支出控除」という制度で職務上の費用を控除できる場合があります。"},
-  {cat:"🇯🇵 日本代表と税金",q:"プロサッカー選手が引退後に受け取る「退職金」の税務上のメリットは？",choices:["メリットなし","退職所得控除が使えて税負担が軽くなる","非課税","半額だけ課税"],ans:1,exp:"退職所得は勤続年数に応じた控除があり、給与より有利な税率に。長く現役を続けるほど控除額が大きくなります。"},
-  {cat:"🇯🇵 日本代表と税金",q:"Jリーグクラブが赤字の場合、法人税はどうなる？",choices:["赤字でも最低限の税金がかかる","完全に税金ゼロ","赤字分を翌年に繰り越して節税できる","行政が補填する"],ans:2,exp:"法人の赤字は最大10年間繰り越せます（欠損金の繰越控除）。Jクラブが赤字でも翌年黒字と相殺できる仕組みです。"},
-  {cat:"🇯🇵 日本代表と税金",q:"サッカースクールを運営する元選手が個人事業主の場合、有利な節税は？",choices:["特になし","小規模企業共済やiDeCoへの加入","給与所得控除の活用","青色申告で65万円控除"],ans:3,exp:"個人事業主は青色申告で最大65万円の特別控除が使えます。小規模企業共済やiDeCoとの組み合わせがおすすめです。"},
-  {cat:"🇯🇵 日本代表と税金",q:"日本のサッカー選手が海外移籍する際の「移籍金」、課税される？",choices:["されない","クラブ間の取引なので法人税が関係する","選手個人に所得税がかかる","移籍金は非課税"],ans:1,exp:"移籍金はクラブ間の取引のため法人税の問題です。選手個人への課税は契約金や給与として支払われる部分になります。"},
-  {cat:"🇯🇵 日本代表と税金",q:"ワールドカップ日本代表のユニフォームスポンサー料、税務上の扱いは？",choices:["協会への寄付扱い","広告宣伝費として損金算入できる","非課税","半額だけ経費になる"],ans:1,exp:"スポンサー費用は広告宣伝費として全額損金算入できます。日本代表スポンサーになることで節税効果もあります。"},
-  {cat:"🇯🇵 日本代表と税金",q:"税理士がサッカークラブをクライアントにするメリットは？",choices:["特にない","試合観戦を経費にできる","選手・クラブ・スポンサーと多角的な顧問契約が見込める","税務調査が来ない"],ans:2,exp:"クラブ顧問になると選手個人・法人・スポンサー企業と顧問先が広がります。スポーツ税務は今後の成長分野です。"},
-  {cat:"🇯🇵 日本代表と税金",q:"Jリーガーが副業でYouTubeを始めた場合、収益の税務上の扱いは？",choices:["非課税","雑所得または事業所得として申告が必要","給与所得に合算される","クラブが代わりに申告する"],ans:1,exp:"副業収入は雑所得または事業所得として確定申告が必要です。年間20万円超で申告義務が生じます。"},
-  // カテゴリー5: 世界の税金トリビア
-  {cat:"💡 世界の税金トリビア",q:"世界で最も税負担が重い国はどこ？",choices:["日本","スウェーデン","デンマーク","フランス"],ans:2,exp:"デンマークはGDP比の税負担率が世界トップクラス。その分、医療・教育・福祉が充実しています。"},
-  {cat:"💡 世界の税金トリビア",q:"タックスヘイブン（租税回避地）として有名な場所はどこ？",choices:["バミューダ諸島","ハワイ","アイスランド","ニュージーランド"],ans:0,exp:"バミューダ諸島は法人税・所得税ゼロの代表的なタックスヘイブン。多くの多国籍企業がペーパーカンパニーを置いています。"},
-  {cat:"💡 世界の税金トリビア",q:"消費税を世界で最初に導入した国はどこ？",choices:["アメリカ","フランス","イギリス","日本"],ans:1,exp:"フランスが1954年に付加価値税（TVA）を世界で初めて導入。日本の消費税導入は1989年です。"},
-  {cat:"💡 世界の税金トリビア",q:"アメリカに連邦消費税がない理由は？",choices:["所得税だけで十分な税収があるから","憲法上の問題と州の権限を尊重するため","消費税は違憲と判断されたから","導入の議論自体がされたことがないから"],ans:1,exp:"アメリカは州ごとに売上税（Sales Tax）があります。連邦レベルの消費税導入は政治的に難しく今も議論中です。"},
-  {cat:"💡 世界の税金トリビア",q:"日本で消費税が導入された年は？",choices:["1985年","1987年","1989年","1992年"],ans:2,exp:"1989年4月、竹下登内閣のもとで税率3%でスタート。その後5%→8%→10%と段階的に引き上げられました。"}
-];
+const WORKER_URL = 'https://hp-sindan-api.yymmatsu.workers.dev';
 
-let gameQuestions=[];
-let currentQ=0;
-let score=0;
-let answered=false;
-let timerInterval=null;
-let timeLeft=20;
-let totalTimeUsed=0;
-let correctCount=0;
+function getScoreClass(score) {
+  if (score < 50) return '高';
+  if (score < 70) return '中';
+  return '低';
+}
 
-function shuffle(arr){return arr.slice().sort(()=>Math.random()-0.5);}
+function getScoreLabel(score) {
+  if (score < 50) return '⚠️ 要改善';
+  if (score < 70) return '△ やや遅い';
+  return '✅ 良好';
+}
 
-function createStars(){
-  const c=document.getElementById('stars');
-  for(let i=0;i<60;i++){
-    const s=document.createElement('div');
-    s.className='star';
-    const size=Math.random()*3+1;
-    s.style.cssText=`width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-duration:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
-    c.appendChild(s);
+function getSalesPoints(data) {
+  const points = [];
+  if (data.mobile < 50) points.push('📱 モバイルの表示速度が非常に遅く、スマホで見たお客様が離脱しているリスクが高い状態です。');
+  else if (data.mobile < 70) points.push('📱 モバイルの表示速度がやや遅めです。スマホユーザーの離脱につながっている可能性があります。');
+  if (data.desktop < 50) points.push('💻 PCでの表示速度も遅く、第一印象で損をしている可能性があります。');
+  if (!data.isSSL) points.push('🔓 SSLが設定されていません。「保護されていない通信」と表示されており、お客様に不安を与えています。今すぐ対応が必要です。');
+  if (data.isWordPress) points.push('⚠️ WordPressが使われています。更新を怠ると不正アクセスやウイルス感染のリスクが高まります。');
+  if (data.risk === '低') points.push('✅ 基本的なパフォーマンスは良好です。さらなる集客強化やデザインリニューアルでより効果が出ます。');
+  if (points.length === 0) points.push('📊 診断完了です。詳しい改善提案はお気軽にご相談ください。');
+  return points;
+}
+
+async function diagnose() {
+  let url = document.getElementById('urlInput').value.trim();
+  if (!url) { alert('URLを入力してください'); return; }
+  if (!url.startsWith('http')) url = 'https://' + url;
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const res = await fetch(`${WORKER_URL}/?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const riskBanner = document.getElementById('riskBanner');
+    riskBanner.className = `risk-banner risk-${data.risk}`;
+    document.getElementById('riskTitle').textContent =
+      data.risk === '高' ? '⚠️ リスクが高い状態です' :
+      data.risk === '中' ? '△ 改善の余地があります' : '✅ 基本的に良好です';
+    document.getElementById('riskDesc').textContent =
+      `診断URL: ${data.url}`;
+
+    const mobileEl = document.getElementById('mobileScore');
+    mobileEl.textContent = data.mobile;
+    mobileEl.className = `score-num score-${getScoreClass(data.mobile)}`;
+    document.getElementById('mobileLabel').textContent = getScoreLabel(data.mobile);
+
+    const desktopEl = document.getElementById('desktopScore');
+    desktopEl.textContent = data.desktop;
+    desktopEl.className = `score-num score-${getScoreClass(data.desktop)}`;
+    document.getElementById('desktopLabel').textContent = getScoreLabel(data.desktop);
+
+    document.getElementById('sslStatus').textContent = data.isSSL ? '✅ 設定済み' : '❌ 未設定';
+    document.getElementById('wpStatus').textContent = data.isWordPress ? '⚠️ 使用中' : '✅ 非WordPress';
+
+    const salesEl = document.getElementById('salesPoints');
+    salesEl.innerHTML = getSalesPoints(data).map(p => `<div class="sales-point">${p}</div>`).join('');
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'block';
   }
 }
 
-function startQuiz(){
-  gameQuestions=shuffle(QUESTIONS).slice(0,10);
-  currentQ=0;score=0;answered=false;totalTimeUsed=0;correctCount=0;
-  document.getElementById('start-screen').style.display='none';
-  document.getElementById('result-screen').style.display='none';
-  document.getElementById('quiz-screen').style.display='block';
-  showQuestion();
-}
-
-function showQuestion(){
-  const q=gameQuestions[currentQ];
-  answered=false;
-  document.getElementById('explanationBox').style.display='none';
-  document.getElementById('btnNext').style.display='none';
-  document.getElementById('qNum').textContent=`Q${currentQ+1}`;
-  document.getElementById('qText').textContent=q.q;
-  document.getElementById('catBadge').textContent=q.cat;
-  document.getElementById('progressFill').style.width=`${(currentQ/10)*100}%`;
-  document.getElementById('progressLabel').textContent=`${currentQ+1} / 10`;
-  document.getElementById('scoreNum').textContent=score;
-
-  const ch=document.getElementById('choices');
-  ch.innerHTML='';
-  const labels=['A','B','C','D'];
-  q.choices.forEach((c,i)=>{
-    const btn=document.createElement('button');
-    btn.className='choice-btn';
-    btn.innerHTML=`<span class="choice-label">${labels[i]}</span>${c}`;
-    btn.onclick=()=>selectAnswer(i);
-    ch.appendChild(btn);
-  });
-
-  document.getElementById('questionCard').style.animation='none';
-  requestAnimationFrame(()=>{document.getElementById('questionCard').style.animation='slideIn 0.35s ease';});
-
-  startTimer();
-}
-
-function startTimer(){
-  clearInterval(timerInterval);
-  timeLeft=20;
-  updateTimerUI(20);
-  timerInterval=setInterval(()=>{
-    timeLeft--;
-    updateTimerUI(timeLeft);
-    if(timeLeft<=0){
-      clearInterval(timerInterval);
-      if(!answered) timeUp();
-    }
-  },1000);
-}
-
-function updateTimerUI(t){
-  const arc=document.getElementById('timerArc');
-  const num=document.getElementById('timerNum');
-  const r=27;const circ=2*Math.PI*r;
-  const offset=circ*(1-t/20);
-  arc.style.strokeDashoffset=offset;
-  const pct=t/20;
-  const color=pct>0.5?`var(--blue3)`:pct>0.25?`var(--gold2)`:`var(--wrong)`;
-  arc.style.stroke=color;
-  num.textContent=t;
-  num.className=t<=5?'timer-num warn':'timer-num';
-}
-
-function timeUp(){
-  answered=true;
-  const q=gameQuestions[currentQ];
-  const btns=document.querySelectorAll('.choice-btn');
-  btns.forEach((b,i)=>{
-    b.disabled=true;
-    if(i===q.ans) b.classList.add('correct');
-  });
-  showExp(q.exp,'⏱ 時間切れ！');
-  showFlash(false);
-  document.getElementById('btnNext').style.display='block';
-}
-
-function selectAnswer(idx){
-  if(answered) return;
-  answered=true;
-  clearInterval(timerInterval);
-  totalTimeUsed+=(20-timeLeft);
-  const q=gameQuestions[currentQ];
-  const btns=document.querySelectorAll('.choice-btn');
-  btns.forEach(b=>b.disabled=true);
-  if(idx===q.ans){
-    btns[idx].classList.add('correct');
-    score++;correctCount++;
-    showFlash(true);
-    fireConfetti();
-    showGoal();
-    showCheer();
-  } else {
-    btns[idx].classList.add('wrong');
-    btns[q.ans].classList.add('correct');
-    showFlash(false);
-  }
-  showExp(q.exp,idx===q.ans?'✅ 正解！':'❌ 不正解...');
-  document.getElementById('btnNext').style.display='block';
-}
-
-function showExp(text,prefix){
-  const box=document.getElementById('explanationBox');
-  box.innerHTML=`<strong>${prefix}</strong>${text}`;
-  box.style.display='block';
-}
-
-function showFlash(correct){
-  const f=document.getElementById('resultFlash');
-  f.className='result-flash '+(correct?'correct-flash':'wrong-flash')+' show';
-  setTimeout(()=>f.className='result-flash',400);
-}
-
-function fireConfetti(){
-  const colors=['#ffd700','#ffffff','#003087','#cc0000','#00c853','#f5a623'];
-  for(let i=0;i<30;i++){
-    setTimeout(()=>{
-      const c=document.createElement('div');
-      c.className='confetti';
-      c.style.left=Math.random()*100+'vw';
-      c.style.background=colors[Math.floor(Math.random()*colors.length)];
-      c.style.transform=`rotate(${Math.random()*360}deg)`;
-      c.style.animationDuration=(1+Math.random()*2)+'s';
-      c.style.animationDelay=Math.random()*0.5+'s';
-      document.body.appendChild(c);
-      setTimeout(()=>c.remove(),3000);
-    },i*40);
-  }
-}
-
-function showGoal(){
-  const o=document.getElementById('goalOverlay');
-  const t=document.getElementById('goalText');
-  const s=document.getElementById('goalSub');
-  const words=['GOAL!','AMAZING!','PERFECT!','SUBARASHII!','YES!'];
-  const subs=['正解！素晴らしい！','その通り！','完璧です！','さすが！','正解！'];
-  const idx=Math.floor(Math.random()*words.length);
-  t.textContent=words[idx];s.textContent=subs[idx];
-  o.style.display='flex';
-  t.style.animation='none';
-  requestAnimationFrame(()=>{t.style.animation='goalAnim 0.8s ease forwards';});
-  setTimeout(()=>{o.style.display='none';},1800);
-}
-
-function showCheer(){
-  const cheers=['すごい！','やった！','完璧！','天才！','最高！'];
-  for(let i=0;i<3;i++){
-    setTimeout(()=>{
-      const el=document.createElement('div');
-      el.className='cheer-word';
-      el.textContent=cheers[Math.floor(Math.random()*cheers.length)];
-      el.style.left=(20+Math.random()*60)+'vw';
-      el.style.top=(40+Math.random()*30)+'vh';
-      const colors=['#ffd700','#ffffff','#00c853'];
-      el.style.color=colors[Math.floor(Math.random()*colors.length)];
-      document.body.appendChild(el);
-      setTimeout(()=>el.remove(),1200);
-    },i*200);
-  }
-}
-
-function nextQuestion(){
-  currentQ++;
-  if(currentQ>=10) showResult();
-  else showQuestion();
-}
-
-function showResult(){
-  document.getElementById('quiz-screen').style.display='none';
-  document.getElementById('result-screen').style.display='block';
-  document.getElementById('progressFill').style.width='100%';
-
-  const pct=correctCount/10;
-  let rank,rankClass,emoji;
-  if(pct>=0.9){rank='🥇 S ランク　税金マスター！';rankClass='rank-s';emoji='🏆';}
-  else if(pct>=0.7){rank='🥈 A ランク　税務の達人！';rankClass='rank-a';emoji='🎖';}
-  else if(pct>=0.5){rank='🥉 B ランク　まずまずです！';rankClass='rank-b';emoji='⚽';}
-  else{rank='📚 C ランク　もう一度挑戦！';rankClass='rank-c';emoji='📖';}
-
-  document.getElementById('trophyEmoji').textContent=emoji;
-  document.getElementById('resultScore').textContent=correctCount;
-  document.getElementById('resultRank').textContent=rank;
-  document.getElementById('resultRank').className='result-rank '+rankClass;
-  document.getElementById('statCorrect').textContent=`${correctCount}/10`;
-  document.getElementById('statTime').textContent=correctCount>0?Math.round(totalTimeUsed/correctCount)+'秒':'—';
-  document.getElementById('statRate').textContent=Math.round(pct*100)+'%';
-
-  fireConfetti();
-}
-
-function retryQuiz(){
-  document.getElementById('result-screen').style.display='none';
-  document.getElementById('start-screen').style.display='block';
-}
-
-function shareResult(){
-  const score=document.getElementById('resultScore').textContent;
-  const rank=document.getElementById('resultRank').textContent;
-  const text=`⚽ ワールドカップ×税金クイズ\n\n結果：${score}/10点\n${rank}\n\n#ワールドカップ #税金クイズ #サッカー`;
-  if(navigator.share){
-    navigator.share({title:'ワールドカップ×税金クイズ',text:text}).catch(()=>{});
-  } else {
-    navigator.clipboard.writeText(text).then(()=>alert('結果をコピーしました！'));
-  }
-}
-
-createStars();
+document.getElementById('urlInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') diagnose();
+});
 </script>
 </body>
 </html>
